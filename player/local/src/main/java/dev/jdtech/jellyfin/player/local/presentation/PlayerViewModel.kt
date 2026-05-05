@@ -15,6 +15,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.mediacodec.MediaCodecSelector
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.models.FindroidSegment
@@ -149,8 +150,14 @@ constructor(
                     .setHwDec(appPreferences.getValue(appPreferences.playerMpvHwdec))
                     .build()
         } else {
+            val customCodecSelector = MediaCodecSelector { mimeType, requiresSecureDecoder, requiresTunnelingDecoder ->
+                MediaCodecSelector.DEFAULT.getDecoderInfos(mimeType, requiresSecureDecoder, requiresTunnelingDecoder)
+                    .filter { it.name != "c2.dolby.eac3.decoder" }
+            }
+
             val renderersFactory =
                 DefaultRenderersFactory(application)
+                    .setMediaCodecSelector(customCodecSelector)
                     .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
             player =
                 ExoPlayer.Builder(application, renderersFactory)
